@@ -3,61 +3,58 @@ package org.ypiel.invest.loan;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.LinkedList;
-import java.util.List;
 
 import org.ypiel.invest.insurance.Insurance;
 
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-import static org.ypiel.invest.Util.formatBD;
+import static org.ypiel.invest.Util.annualPercent;
+import static org.ypiel.invest.Util.percent;
 
 @Getter
 @EqualsAndHashCode
-@AllArgsConstructor
 public class Loan {
 
-    private String name;
-    private LocalDate start;
-    private BigDecimal monthlyAmount;
-    private BigDecimal rate;
-    private BigDecimal amount;
-    private Insurance insurance;
+    private final String name;
 
-    public List<LoanEntry> computePaymentPlan(){
-        LinkedList<LoanEntry> entries = new LinkedList<>();
+    private final BigDecimal applicationFees;
+    private final LocalDate start;
+    private final BigDecimal monthlyAmount;
+    private final BigDecimal rate;
+    private final BigDecimal amount;
+    private final Insurance insurance;
 
-        BigDecimal r = rate.divide(new BigDecimal(100), 5, RoundingMode.HALF_UP).divide(new BigDecimal(12), 5, RoundingMode.HALF_UP);
+    public Loan(String name, BigDecimal applicationFees, LocalDate start, BigDecimal monthlyAmount, BigDecimal rate, BigDecimal amount, Insurance insurance) {
+        this.name = name;
+        this.applicationFees = applicationFees;
+        this.start = start;
+        this.monthlyAmount = monthlyAmount;
+        this.rate = annualPercent(rate); //rate.divide(new BigDecimal(100), 10, RoundingMode.HALF_UP).divide(new BigDecimal(12), 10, RoundingMode.HALF_UP);
+        this.amount = amount;
+        this.insurance = insurance;
+    }
 
-        LocalDate entryDate = start;
-        LoanEntry init = new LoanEntry(entryDate, this.name+" #Init", BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, amount);
-        entries.add(init);
-        while(entries.getLast().getRemaining().intValue() > 0){
-            final LoanEntry last = entries.getLast();
-            final BigDecimal interest = last.getRemaining().multiply(r);
-            final BigDecimal insurance = this.insurance.compute(last.getRemaining());
-            BigDecimal capital = monthlyAmount.subtract(interest).subtract(insurance);
-            BigDecimal remaining = last.getRemaining().subtract(capital);
+    /**
+     *
+     * @param mergeLastLimit Merge the two last entries if last amount is inferior to normal amount x mergeLastLimit%
+     * @return
+     */
+    public LinkedLoanEntry computePaymentPlan(final BigDecimal mergeLastLimit){
+        BigDecimal limit = percent(mergeLastLimit); // mergeLastLimit.divide(new BigDecimal(100), 10, RoundingMode.HALF_UP).divide(new BigDecimal(12), 10, RoundingMode.HALF_UP);
 
-            if(remaining.compareTo(BigDecimal.ZERO) < 0){
-                capital = last.getRemaining();
-                remaining = BigDecimal.ZERO;
-            }
+        final LinkedLoanEntry init = LinkedLoanEntry.init(this);
+        LinkedLoanEntry current = init;
+        do{
+            current = new LinkedLoanEntry(current);
+        }while(current.getRemaining().compareTo(BigDecimal.ZERO) > 0);
 
-            if(remaining.compareTo(entries.getLast().getRemaining()) >= 0){
-                throw new IllegalArgumentException(String.format("The remaining capital is same or increase [%s >= %s]. The loan parameter must be wrong.", formatBD(remaining), formatBD(entries.getLast().getRemaining())));
-            }
-
-            LoanEntry le = new LoanEntry(entryDate, this.name+" #"+entries.size(), capital, interest, insurance, remaining);
-            entries.add(le);
-            entryDate = entryDate.plusMonths(1);
-
-            System.out.println("=> " + entries.size());
+        final BigDecimal min = this.getMonthlyAmount().multiply(limit);
+        if(current.getLast().getAmount().compareTo(min) <= 0){
+            current.getLast().getPrevious().mergeNext();
         }
 
-        return entries;
+        return init;
     }
 
 }

@@ -13,8 +13,11 @@ import lombok.Getter;
 @AllArgsConstructor
 public class Entry {
 
-    private LocalDate date;
+    private final LocalDate date;
     private BigDecimal amount;
-    private String summary;
+    private final String summary;
 
+    protected void setAmount(final BigDecimal amount){
+        this.amount = amount;
+    }
 }

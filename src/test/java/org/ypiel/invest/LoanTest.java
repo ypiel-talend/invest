@@ -3,35 +3,48 @@ package org.ypiel.invest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.ypiel.invest.insurance.FixedInsurance;
 import org.ypiel.invest.insurance.VariableInsurance;
+import org.ypiel.invest.loan.LinkedLoanEntry;
 import org.ypiel.invest.loan.Loan;
-import org.ypiel.invest.loan.LoanEntry;
 
 class LoanTest {
+
+    private final static BigDecimal limitLast = new BigDecimal(50);
 
     @Test
     void computePaymentPlanWithFixedInsurance() {
 
-        Loan l = new Loan("ImmoA", LocalDate.of(2021, Month.JANUARY, 1), new BigDecimal(700), new BigDecimal(1.5d), new BigDecimal(20000), new FixedInsurance(new BigDecimal(70)));
-        final List<LoanEntry> loanEntries = l.computePaymentPlan();
+        Loan l = new Loan("ImmoA", new BigDecimal(0d).add(new BigDecimal(0d)), LocalDate.of(2021, Month.JANUARY, 1), new BigDecimal(700), new BigDecimal(1.5d), new BigDecimal(20000), new FixedInsurance(new BigDecimal(70)));
+        final LinkedLoanEntry linkedLoanEntry = l.computePaymentPlan(limitLast);
 
-        Assertions.assertNotNull(loanEntries);
-        Assertions.assertTrue(loanEntries.size() > 1);
+        Assertions.assertNotNull(linkedLoanEntry);
+        Assertions.assertTrue(linkedLoanEntry.size() > 1);
     }
 
     @Test
     void computePaymentPlanWithVariableInsurance() {
 
-        Loan l = new Loan("ImmoB", LocalDate.of(2021, Month.JANUARY, 1), new BigDecimal(700), new BigDecimal(1.5d), new BigDecimal(20000), new VariableInsurance(new BigDecimal(0.3)));
-        final List<LoanEntry> loanEntries = l.computePaymentPlan();
+        Loan l = new Loan("ImmoB", new BigDecimal(0d).add(new BigDecimal(0d)), LocalDate.of(2021, Month.JANUARY, 1), new BigDecimal(700), new BigDecimal(1.5d), new BigDecimal(20000), new VariableInsurance(new BigDecimal(0.35d)));
+        final LinkedLoanEntry linkedLoanEntry = l.computePaymentPlan(limitLast);
 
-        Assertions.assertNotNull(loanEntries);
-        Assertions.assertTrue(loanEntries.size() > 1);
+        Assertions.assertNotNull(linkedLoanEntry);
+        Assertions.assertTrue(linkedLoanEntry.size() > 1);
+    }
+
+
+
+    @Test
+    void another() {
+
+        Loan l = new Loan("Another", new BigDecimal(0d), LocalDate.of(2021, Month.JANUARY, 1), new BigDecimal(858.99), new BigDecimal(5d), new BigDecimal(10000), new FixedInsurance(new BigDecimal(2.92d)));
+        final LinkedLoanEntry linkedLoanEntry = l.computePaymentPlan(limitLast);
+
+        Assertions.assertNotNull(linkedLoanEntry);
+        Assertions.assertTrue(linkedLoanEntry.size() > 1);
     }
 
 

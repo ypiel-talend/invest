@@ -51,7 +51,7 @@ public class Loan {
 
         final BigDecimal min = this.getMonthlyAmount().multiply(limit);
         if(current.getLast().getAmount().compareTo(min) <= 0){
-            current.getLast().getPrevious().mergeNext();
+            ((LinkedLoanEntry)current.getLast().getPrevious()).mergeNext();
         }
 
         return init;

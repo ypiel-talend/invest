@@ -14,11 +14,13 @@ public class Output {
 
     private final static String driver = "org.apache.derby.jdbc.EmbeddedDriver";
     private final static String protocol = "jdbc:derby:";
-    private final static String url = protocol + "/tmp/derbyDB;create=true;shutdown=true";
+    private final static String url = protocol + "/tmp/derbyDB;create=true;"; //shutdown=true";
 
     public void write(List<Entry> entries){
 
         try {
+            log.info("Load jdbc driver : " + driver);
+            log.info("jdbc url : " + url);
             Class.forName(driver);
             try(Connection conn = DriverManager.getConnection(url)){
                 _checkDB(conn);
@@ -33,7 +35,7 @@ public class Output {
     }
 
     private void _checkDB(final Connection conn){
-        
+
     }
 
     private void _write(final Connection conn, final List<Entry> entries){

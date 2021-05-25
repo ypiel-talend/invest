@@ -22,7 +22,7 @@ public class LinkedLoanEntry extends LinkedEntry {
     private final Loan loan;
 
     private LinkedLoanEntry(final Loan loan) {
-        super(loan.getStart(), loan.getMonthlyAmount(), loan.getName() + " #init");
+        super(loan.getName(), loan.getStart(), loan.getMonthlyAmount(), loan.getName() + " #init");
         this.capital = BigDecimal.ZERO;
         this.interest = BigDecimal.ZERO;
         this.insurance = BigDecimal.ZERO;
@@ -69,11 +69,6 @@ public class LinkedLoanEntry extends LinkedEntry {
 
         return this;
     }
-
-
-
-
-
 
     public BigDecimal totalCost(){
         if(this.isFirst()){

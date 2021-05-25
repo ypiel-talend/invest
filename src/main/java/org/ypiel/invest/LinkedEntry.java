@@ -13,15 +13,17 @@ import lombok.Setter;
 @Setter(AccessLevel.PROTECTED)
 public class LinkedEntry extends Entry {
 
+    private final String name;
     private final Integer id;
 
     private LinkedEntry previous;
     private LinkedEntry next;
 
-    public LinkedEntry(final LocalDate date, final BigDecimal amount, final String summary) {
+    public LinkedEntry(final String name, final LocalDate date, final BigDecimal amount, final String summary) {
         super(date, amount, summary);
 
         this.id = 0;
+        this.name = name;
         this.previous = null;
     }
 
@@ -31,6 +33,7 @@ public class LinkedEntry extends Entry {
         this.setPrevious(previous);
         this.previous.setNext(this);
         this.id = previous.getId() + 1;
+        this.name = previous.getName();
     }
 
 

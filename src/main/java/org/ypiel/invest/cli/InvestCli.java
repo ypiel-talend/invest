@@ -4,9 +4,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.util.Collections;
-
-import org.ypiel.invest.storage.Output;
+import org.ypiel.invest.storage.StorageEntries;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,8 +25,11 @@ public class InvestCli implements Runnable {
 
     private void _checkStorage(){
         log.info("Check storage...");
-        Output o = new Output();
-        o.write(Collections.emptyList());
+        try(StorageEntries o = new StorageEntries()) {
+            o.checkStorage();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {

@@ -15,7 +15,7 @@ public class EntryORB {
     public void addBatch(PreparedStatement ps, Entry e) throws SQLException {
         ps.clearParameters();
         ps.setDate(1, Date.valueOf(e.getDate()));
-        ps.setBigDecimal(2, e.getAmount());
+        ps.setBigDecimal(2, e.getAmount(true));
         ps.setString(3, e.getSummary());
         ps.addBatch();
     }

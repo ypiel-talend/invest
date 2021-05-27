@@ -3,8 +3,6 @@ package org.ypiel.invest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import org.ypiel.invest.loan.LinkedLoanEntry;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,23 +17,29 @@ public class LinkedEntry extends Entry {
     private LinkedEntry previous;
     private LinkedEntry next;
 
-    public LinkedEntry(final String name, final LocalDate date, final BigDecimal amount, final String summary) {
-        super(date, amount, summary);
+    /**
+     * In months.
+     */
+    private int period;
+
+    public LinkedEntry(final String name, final LocalDate date, final BigDecimal amount, final String summary, boolean isDebit, int period) {
+        super(date, amount, summary, isDebit);
 
         this.id = 0;
         this.name = name;
         this.previous = null;
+        this.period = period;
     }
 
-    public LinkedEntry(final LinkedEntry previous, final BigDecimal amount, final String summary) {
-        super(previous.isFirst() ? previous.getDate() : previous.getDate().plusMonths(1), amount, summary + " #" + (previous.getId() + 1));
+    public LinkedEntry(final LinkedEntry previous, final BigDecimal amount, final String summary, boolean isDebit) {
+        super(previous.isFirst() ? previous.getDate() : previous.getDate().plusMonths(previous.getPeriod()), amount, summary + " #" + (previous.getId() + 1), isDebit);
 
         this.setPrevious(previous);
         this.previous.setNext(this);
         this.id = previous.getId() + 1;
         this.name = previous.getName();
+        this.period = previous.getPeriod();
     }
-
 
     public boolean isFirst() {
         return this.previous == null;
@@ -53,20 +57,29 @@ public class LinkedEntry extends Entry {
         this.next = next;
     }
 
-    public void removeNext(){
+    public LinkedEntry removeNext(){
         this.next = null;
+        return this;
     }
 
-    public void removePrevious(){
+    public LinkedEntry removePrevious(){
         this.previous = null;
+        return this;
+    }
+
+    public Integer size() {
+        return this.getLast()._size();
     }
 
     /**
      *
      * @return The total number of element in the linked list.
      */
-    public Integer size() {
-        return this.getLast().getId() + 1;
+    public Integer _size() {
+        if(this.isFirst()){
+            return 1;
+        }
+        return this.getPrevious()._size() + 1;
     }
 
 

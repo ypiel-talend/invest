@@ -1,7 +1,6 @@
 package org.ypiel.invest.loan;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 
 import org.ypiel.invest.insurance.Insurance;
@@ -40,19 +39,22 @@ public class Loan {
      * @param mergeLastLimit Merge the two last entries if last amount is inferior to normal amount x mergeLastLimit%
      * @return
      */
-    public LinkedLoanEntry computePaymentPlan(final BigDecimal mergeLastLimit){
+    public LoanLinkedEntry computePaymentPlan(final BigDecimal mergeLastLimit){
         BigDecimal limit = percent(mergeLastLimit); // mergeLastLimit.divide(new BigDecimal(100), 10, RoundingMode.HALF_UP).divide(new BigDecimal(12), 10, RoundingMode.HALF_UP);
 
-        final LinkedLoanEntry init = LinkedLoanEntry.init(this);
-        LinkedLoanEntry current = init;
+        LoanLinkedEntry init = LoanLinkedEntry.init(this);
+        LoanLinkedEntry current = init;
         do{
-            current = new LinkedLoanEntry(current);
+            current = new LoanLinkedEntry(current);
         }while(current.getRemaining().compareTo(BigDecimal.ZERO) > 0);
 
         final BigDecimal min = this.getMonthlyAmount().multiply(limit);
         if(current.getLast().getAmount().compareTo(min) <= 0){
-            ((LinkedLoanEntry)current.getLast().getPrevious()).mergeNext();
+            current = ((LoanLinkedEntry)current.getLast().getPrevious()).mergeNext();
         }
+
+        // remove #init
+        init = (LoanLinkedEntry)current.getFirst().getNext().removePrevious();
 
         return init;
     }

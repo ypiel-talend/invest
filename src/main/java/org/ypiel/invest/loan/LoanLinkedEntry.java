@@ -9,7 +9,7 @@ import org.ypiel.invest.LinkedEntry;
 import lombok.Getter;
 
 @Getter
-public class LinkedLoanEntry extends LinkedEntry {
+public class LoanLinkedEntry extends LinkedEntry {
 
 
     private BigDecimal capital;
@@ -17,12 +17,10 @@ public class LinkedLoanEntry extends LinkedEntry {
     private final BigDecimal insurance;
     private final BigDecimal remaining;
 
-
-
     private final Loan loan;
 
-    private LinkedLoanEntry(final Loan loan) {
-        super(loan.getName(), loan.getStart(), loan.getMonthlyAmount(), loan.getName() + " #init");
+    private LoanLinkedEntry(final Loan loan) {
+        super(loan.getName(), loan.getStart(), loan.getMonthlyAmount(), loan.getName() + " #init", true, 1);
         this.capital = BigDecimal.ZERO;
         this.interest = BigDecimal.ZERO;
         this.insurance = BigDecimal.ZERO;
@@ -30,9 +28,8 @@ public class LinkedLoanEntry extends LinkedEntry {
         this.loan = loan;
     }
 
-    public LinkedLoanEntry(final LinkedLoanEntry previous) {
-        //super(previous.isFirst() ? previous.getDate() : previous.getDate().plusMonths(1), previous.getLoan().getMonthlyAmount(), previous.getLoan().getName());
-        super(previous, previous.getAmount(), previous.getLoan().getName());
+    public LoanLinkedEntry(final LoanLinkedEntry previous) {
+        super(previous, previous.getAmount(), previous.getLoan().getName(), true);
 
         this.loan = previous.getLoan();
         this.interest = previous.getRemaining().multiply(loan.getRate());
@@ -54,11 +51,11 @@ public class LinkedLoanEntry extends LinkedEntry {
         }
     }
 
-    public LinkedLoanEntry mergeNext(){
+    public LoanLinkedEntry mergeNext(){
         if(this.getNext() == null){
             return this;
         }
-        LinkedLoanEntry next = (LinkedLoanEntry)this.getNext();
+        LoanLinkedEntry next = (LoanLinkedEntry)this.getNext();
         this.removeNext();
         next.removePrevious();
 
@@ -75,12 +72,12 @@ public class LinkedLoanEntry extends LinkedEntry {
             return this.getInterest().add(this.getInsurance()).add(this.getLoan().getApplicationFees());
         }
 
-        return ((LinkedLoanEntry)this.getPrevious()).totalCost().add(this.getInterest()).add(this.getInsurance());
+        return ((LoanLinkedEntry)this.getPrevious()).totalCost().add(this.getInterest()).add(this.getInsurance());
     }
 
 
-    public final static LinkedLoanEntry init(final Loan loan) {
-        return new LinkedLoanEntry(loan);
+    public final static LoanLinkedEntry init(final Loan loan) {
+        return new LoanLinkedEntry(loan);
     }
 
 }

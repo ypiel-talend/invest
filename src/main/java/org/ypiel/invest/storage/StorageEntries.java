@@ -88,8 +88,8 @@ public class StorageEntries implements AutoCloseable {
 
             List<Entry> entries = new ArrayList<>();
 
-            entries.add(new Entry(LocalDate.now(), new BigDecimal(100.1234d), "This is a 100.1234 test."));
-            entries.add(new Entry(LocalDate.now(), new BigDecimal(200.1234d), "This is a 200.1234 test."));
+            entries.add(new Entry(LocalDate.now(), new BigDecimal(100.1234d), "This is a 100.1234 test.", false));
+            entries.add(new Entry(LocalDate.now(), new BigDecimal(200.1234d), "This is a -200.1234 test.", true));
 
             this._write(name, entries);
 

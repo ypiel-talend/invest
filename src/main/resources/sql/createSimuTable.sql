@@ -9,5 +9,6 @@ create table <table_name> (id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY(S
                             linkedentry_capital DECIMAL(10,5),
                             linkedentry_interest DECIMAL(10,5),
                             linkedentry_insurance DECIMAL(10,5),
-                            linkedentry_remaining DECIMAL(10,5)
+                            linkedentry_remaining DECIMAL(10,5),
+                            linkedentry_prepayment DECIMAL(10,5)
                         )

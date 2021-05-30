@@ -55,6 +55,7 @@ public class Loan {
 
         // remove #init
         init = (LoanLinkedEntry)current.getFirst().getNext().removePrevious();
+        init.asList().stream().forEach(e -> ((LoanLinkedEntry)e).computePrepayment());
 
         return init;
     }

@@ -40,7 +40,7 @@ public class Recurring {
         this.temporal = temporal;
     }
 
-    public RecurringLinkedEntry computePaymentPlan(final boolean isDebit){
+    public RecurringLinkedEntry computePaymentPlan(){
         RecurringLinkedEntry init = RecurringLinkedEntry.init(this);
 
         RecurringLinkedEntry current = init;

@@ -22,6 +22,7 @@ public class BigFlatEntry {
     private BigDecimal linkedentry_interest;
     private BigDecimal linkedentry_insurance;
     private BigDecimal linkedentry_remaining;
+    private BigDecimal linkedentry_prepayment;
 
     private BigFlatEntry previous;
     private BigFlatEntry next;
@@ -38,14 +39,14 @@ public class BigFlatEntry {
         if (this.isFirst()) {
             return this;
         }
-        return this.getPrevious();
+        return this.getPrevious().getFirst();
     }
 
     public BigFlatEntry getLast() {
         if (this.isLast()) {
             return this;
         }
-        return this.getNext();
+        return this.getNext().getLast();
     }
 
     public int size() {
@@ -61,7 +62,7 @@ public class BigFlatEntry {
     }
 
     public void display(PrintStream ps){
-        ps.printf(FORMAT, this.getId(), this.getDate(), this.getAmount(), this.getSummary(), this.getLinkedentry_name(), this.getLinkedentry_id(), this.getLinkedentry_capital(), this.getLinkedentry_interest(), this.getLinkedentry_insurance(), this.getLinkedentry_remaining());
+        ps.printf(FORMAT, this.getId(), this.getDate(), this.getAmount(), this.getSummary(), this.getLinkedentry_name(), this.getLinkedentry_id(), this.getLinkedentry_capital(), this.getLinkedentry_interest(), this.getLinkedentry_insurance(), this.getLinkedentry_remaining(), this.getLinkedentry_prepayment());
     }
 
 }

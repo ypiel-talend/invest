@@ -2,6 +2,10 @@ package org.ypiel.invest;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.ypiel.invest.loan.LoanLinkedEntry;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -41,12 +45,41 @@ public class LinkedEntry extends Entry {
         this.period = previous.getPeriod();
     }
 
+    public List<LinkedEntry> asList() {
+        List<LinkedEntry> l = new ArrayList<>();
+        return this.getLast()._asList(l);
+    }
+
+    public List<LinkedEntry> _asList(List<LinkedEntry> l) {
+        if (this.isFirst()) {
+            l.add(this);
+            return l;
+        }
+        this.getPrevious()._asList(l).add(this);
+        return l;
+    }
+
     public boolean isFirst() {
         return this.previous == null;
     }
 
     public boolean isLast() {
         return this.next == null;
+    }
+
+    public List<LinkedEntry> getNextFurtherAsList(int further) {
+        List<LinkedEntry> list = new ArrayList<>();
+        LinkedEntry current = this;
+        list.add(current);
+        for (int i = 1; i < further; i++) {
+            if (current.isLast()) {
+                return list;
+            }
+            current = current.getNext();
+            list.add(current);
+        }
+
+        return list;
     }
 
     public void setNext(final LinkedEntry next) {
@@ -57,12 +90,12 @@ public class LinkedEntry extends Entry {
         this.next = next;
     }
 
-    public LinkedEntry removeNext(){
+    public LinkedEntry removeNext() {
         this.next = null;
         return this;
     }
 
-    public LinkedEntry removePrevious(){
+    public LinkedEntry removePrevious() {
         this.previous = null;
         return this;
     }
@@ -72,11 +105,10 @@ public class LinkedEntry extends Entry {
     }
 
     /**
-     *
      * @return The total number of element in the linked list.
      */
     public Integer _size() {
-        if(this.isFirst()){
+        if (this.isFirst()) {
             return 1;
         }
         return this.getPrevious()._size() + 1;

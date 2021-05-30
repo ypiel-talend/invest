@@ -1,6 +1,7 @@
 package org.ypiel.invest.loan;
 
 import static org.ypiel.invest.Util.formatBD;
+import static org.ypiel.invest.Util.percent;
 
 import java.math.BigDecimal;
 
@@ -11,11 +12,14 @@ import lombok.Getter;
 @Getter
 public class LoanLinkedEntry extends LinkedEntry {
 
+    public final static BigDecimal PREPAYMENT_REMAINING_PERCENT = percent(new BigDecimal(3.0d));
 
     private BigDecimal capital;
     private BigDecimal interest;
     private final BigDecimal insurance;
     private final BigDecimal remaining;
+    private BigDecimal prepayment;
+
 
     private final Loan loan;
 
@@ -24,6 +28,7 @@ public class LoanLinkedEntry extends LinkedEntry {
         this.capital = BigDecimal.ZERO;
         this.interest = BigDecimal.ZERO;
         this.insurance = BigDecimal.ZERO;
+        this.prepayment = BigDecimal.ZERO;
         this.remaining = loan.getAmount();
         this.loan = loan;
     }
@@ -65,6 +70,13 @@ public class LoanLinkedEntry extends LinkedEntry {
         super.setAmount(this.getInterest().add(this.getInsurance()).add(this.getCapital()));
 
         return this;
+    }
+
+    public void computePrepayment(){
+        BigDecimal next6MonthsInterest = this.getNextFurtherAsList(6).stream().map(e -> ((LoanLinkedEntry)e).getInterest()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal prepayment3percent = this.getRemaining().multiply(PREPAYMENT_REMAINING_PERCENT);
+
+        this.prepayment = next6MonthsInterest.compareTo(prepayment3percent) < 0 ? next6MonthsInterest : prepayment3percent;
     }
 
     public BigDecimal totalCost(){

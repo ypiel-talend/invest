@@ -14,6 +14,13 @@ import java.util.UUID;
 
 import org.ypiel.invest.BigFlatEntry;
 import org.ypiel.invest.Entry;
+import org.ypiel.invest.insurance.FixedInsurance;
+import org.ypiel.invest.insurance.VariableInsurance;
+import org.ypiel.invest.loan.Loan;
+import org.ypiel.invest.loan.LoanLinkedEntry;
+import org.ypiel.invest.recurring.Recurring;
+import org.ypiel.invest.recurring.Recurring.Temporal;
+import org.ypiel.invest.recurring.RecurringLinkedEntry;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,6 +98,22 @@ public class StorageEntries implements AutoCloseable {
             entries.add(new Entry(LocalDate.now(), new BigDecimal(100.1234d), "This is a 100.1234 test.", false));
             entries.add(new Entry(LocalDate.now(), new BigDecimal(200.1234d), "This is a -200.1234 test.", true));
 
+            Loan l = new Loan("Loan", new BigDecimal(500.0d), LocalDate.now(), new BigDecimal(700.0d), new BigDecimal(1.5d), new BigDecimal(50000.0d), new VariableInsurance(new BigDecimal(0.33d)));
+            final LoanLinkedEntry loanLinkedEntry = l.computePaymentPlan(new BigDecimal(50.0d));
+            entries.addAll(loanLinkedEntry.asList());
+
+            Recurring r = new Recurring("Recurring", LocalDate.now(), LocalDate.now().plusMonths(5), BigDecimal.ZERO, new BigDecimal(35.50d), true, Temporal.MONTHLY);
+            final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan();
+            entries.addAll(recurringLinkedEntry.asList());
+
+            Recurring rtaxes = new Recurring("Taxes", LocalDate.now(), LocalDate.now().plusYears(4), new BigDecimal(2.0d), new BigDecimal(800.0d), true, Temporal.ANNUALLY);
+            final RecurringLinkedEntry taxes = rtaxes.computePaymentPlan();
+            entries.addAll(taxes.asList());
+
+            Recurring rrent = new Recurring("Rent", LocalDate.now(), LocalDate.now().plusYears(10), new BigDecimal(1.7d), new BigDecimal(750.0d), false, Temporal.MONTHLY);
+            final RecurringLinkedEntry rent = rrent.computePaymentPlan();
+            entries.addAll(rent.asList());
+
             this._write(name, entries);
 
             final BigFlatEntry first = _select(name);
@@ -109,7 +132,7 @@ public class StorageEntries implements AutoCloseable {
     private BigFlatEntry _select(final String name) throws SQLException {
         final Statement select = conn.createStatement();
         log.info(String.format("Select entries from '%s'...", name));
-        final ResultSet res = select.executeQuery("select * from " + name);
+        final ResultSet res = select.executeQuery("select * from " + name + " order by date");
 
         EntryORB orb = new EntryORB();
         BigFlatEntry current = null;

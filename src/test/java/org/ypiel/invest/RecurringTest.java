@@ -23,7 +23,7 @@ class RecurringTest {
                 true,
                 Temporal.MONTHLY
         );
-        final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan(true);
+        final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan();
 
         Assertions.assertNotNull(recurringLinkedEntry);
         Assertions.assertTrue(recurringLinkedEntry.size() > 1);
@@ -40,7 +40,7 @@ class RecurringTest {
                 true,
                 Temporal.ANNUALLY
         );
-        final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan(true);
+        final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan();
 
         Assertions.assertNotNull(recurringLinkedEntry);
         Assertions.assertTrue(recurringLinkedEntry.size() > 1);

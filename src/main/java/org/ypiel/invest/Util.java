@@ -46,7 +46,7 @@ public class Util {
 
     public static void displayBigFlatEntries(PrintStream ps, final BigFlatEntry bfe) {
         ps.println("---------------------------------------------------------------------------------------------------------");
-        ps.printf(BigFlatEntry.FORMAT, "ID", "DATE", "AMOUNT", "SUMMARY", "LINKEDENTRY_NAME", "LINKEDENTRY_ID", "LINKEDENTRY_CAPITAL", "LINKEDENTRY_INTEREST", "LINKEDENTRY_INSURANCE", "LINKEDENTRY_REMAINING");
+        ps.printf(BigFlatEntry.FORMAT, "ID", "DATE", "AMOUNT", "SUMMARY", "LINKEDENTRY_NAME", "LINKEDENTRY_ID", "LINKEDENTRY_CAPITAL", "LINKEDENTRY_INTEREST", "LINKEDENTRY_INSURANCE", "LINKEDENTRY_REMAINING", "LINKEDENTRY_PREPAYMENT");
         ps.println("---------------------------------------------------------------------------------------------------------");
 
         if (bfe == null) {

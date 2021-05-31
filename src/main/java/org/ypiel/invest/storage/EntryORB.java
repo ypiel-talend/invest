@@ -10,9 +10,27 @@ import java.time.LocalDate;
 import org.ypiel.invest.BigFlatEntry;
 import org.ypiel.invest.Entry;
 import org.ypiel.invest.LinkedEntry;
+import org.ypiel.invest.insurance.InsuranceFactory;
+import org.ypiel.invest.loan.Loan;
 import org.ypiel.invest.loan.LoanLinkedEntry;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class EntryORB {
+
+    public void addBatch(PreparedStatement ps, Loan e) throws SQLException {
+        log.info("Store loan...");
+        ps.setString(1, e.getName());
+        ps.setBigDecimal(2, e.getApplicationFees());
+        ps.setDate(3, Date.valueOf(e.getStart()));
+        ps.setBigDecimal(4, e.getMonthlyAmount());
+        ps.setBigDecimal(5, e.getRate());
+        ps.setBigDecimal(6, e.getAmount());
+        ps.setBigDecimal(7, e.getInsurance().getParam());
+        ps.setString(8, InsuranceFactory.getType(e.getInsurance()));
+    }
+
 
     public void addBatch(PreparedStatement ps, Entry e) throws SQLException {
         ps.clearParameters();
@@ -20,12 +38,12 @@ public class EntryORB {
         ps.setBigDecimal(2, e.getAmount(true));
         ps.setString(3, e.getSummary());
 
-        if(e instanceof LinkedEntry){
-            linkedEntryToPs(ps, (LinkedEntry)e);
+        if (e instanceof LinkedEntry) {
+            linkedEntryToPs(ps, (LinkedEntry) e);
         }
 
-        if(e instanceof LoanLinkedEntry){
-            loanLinkedEntryToPs(ps, (LoanLinkedEntry)e);
+        if (e instanceof LoanLinkedEntry) {
+            loanLinkedEntryToPs(ps, (LoanLinkedEntry) e);
         }
 
         ps.addBatch();

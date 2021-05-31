@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,9 +69,14 @@ public class StorageEntries implements AutoCloseable {
     }
 
 
-    public void write(final String tableName, List<Entry> entries) {
+    public void writeEntries(final String tableName, List<Entry> entries) {
         _checkConn();
-        _write(tableName, entries);
+        _write(tableName, "sql/insert_entries.sql", new ArrayList<>(entries));
+    }
+
+    public void writeLoans(final String tableName, List<Loan> loans){
+        _checkConn();
+        _write(tableName, "sql/insert_loans.sql", new ArrayList<>(loans));
     }
 
     private void _checkConn() {
@@ -90,8 +96,11 @@ public class StorageEntries implements AutoCloseable {
         }
         name = "invest_" + name;
 
+        String entities_names = name + "entities";
+        String loans_name = name + "_loans";
+
         try {
-            _createTable(name);
+            _createTable(entities_names, loans_name);
 
             List<Entry> entries = new ArrayList<>();
 
@@ -101,6 +110,7 @@ public class StorageEntries implements AutoCloseable {
             Loan l = new Loan("Loan", new BigDecimal(500.0d), LocalDate.now(), new BigDecimal(700.0d), new BigDecimal(1.5d), new BigDecimal(50000.0d), new VariableInsurance(new BigDecimal(0.33d)));
             final LoanLinkedEntry loanLinkedEntry = l.computePaymentPlan(new BigDecimal(50.0d));
             entries.addAll(loanLinkedEntry.asList());
+            this.writeLoans(loans_name, Arrays.asList(l));
 
             Recurring r = new Recurring("Recurring", LocalDate.now(), LocalDate.now().plusMonths(5), BigDecimal.ZERO, new BigDecimal(35.50d), true, Temporal.MONTHLY);
             final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan();
@@ -114,14 +124,14 @@ public class StorageEntries implements AutoCloseable {
             final RecurringLinkedEntry rent = rrent.computePaymentPlan();
             entries.addAll(rent.asList());
 
-            this._write(name, entries);
+            this.writeEntries(entities_names, entries);
 
-            final BigFlatEntry first = _select(name);
+            final BigFlatEntry first = _select(entities_names);
             displayBigFlatEntries(System.out, first);
 
-            log.info(String.format("Drop '%s' table...", name));
+            log.info(String.format("Drop '%s' table...", entities_names));
             final Statement drop = conn.createStatement();
-            drop.execute("drop table " + name);
+            drop.execute("drop table " + entities_names);
 
         } catch (SQLException e) {
             log.error(String.format("Checking database has failed."), e);
@@ -152,8 +162,13 @@ public class StorageEntries implements AutoCloseable {
         return current == null ? null : current.getFirst();
     }
 
-    private void _createTable(final String tableName) {
-        final String create = loadFileFromResources("sql/createSimuTable.sql");
+    private void _createTable(final String entities, final String loans) {
+        _create(entities, "sql/create_entries.sql");
+        _create(loans, "sql/create_loans.sql");
+    }
+
+    private void _create(final String tableName, final String file) {
+        final String create = loadFileFromResources(file);
         final String replace = create.replace(table_name_placeholder, tableName);
         try {
             final Statement st = conn.createStatement();
@@ -165,17 +180,26 @@ public class StorageEntries implements AutoCloseable {
         }
     }
 
-    private void _write(final String tableName, final List<Entry> entries) {
-        log.info(String.format("Store %s entries in '%s'.", entries.size(), tableName));
+    private void prepareStatement(final Object o, EntryORB orb, final PreparedStatement ps) throws SQLException {
+        if(o instanceof Entry){
+            orb.addBatch(ps, (Entry)o);
+        }
+        else if(o instanceof Loan){
+            orb.addBatch(ps, (Loan)o);
+        }
+    }
+
+    private void _write(final String tableName, final String file, final List<Object> list) {
+        log.info(String.format("Store %s elements in '%s'.", list.size(), tableName));
         int i = 0;
         int n = 100;
         try {
             EntryORB orb = new EntryORB();
-            String sql = loadFileFromResources("sql/insert.sql");
+            String sql = loadFileFromResources(file);
             sql = sql.replace(table_name_placeholder, tableName);
             PreparedStatement ps = this.conn.prepareStatement(sql);
-            for (Entry e : entries) {
-                orb.addBatch(ps, e);
+            for (Object o : list) {
+                prepareStatement(o, orb, ps);
                 i++;
                 if (i % n == 0) {
                     ps.executeBatch();

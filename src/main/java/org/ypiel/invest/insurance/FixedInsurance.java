@@ -17,4 +17,11 @@ public class FixedInsurance implements Insurance {
     public BigDecimal compute(BigDecimal insuredAmount) {
         return value;
     }
+
+    @Override
+    public BigDecimal getParam() {
+        return this.getValue();
+    }
+
+
 }

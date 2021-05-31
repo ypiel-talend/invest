@@ -23,4 +23,9 @@ public class VariableInsurance implements Insurance {
     public BigDecimal compute(BigDecimal insuredAmount) {
         return insuredAmount.multiply(rate);
     }
+
+    @Override
+    public BigDecimal getParam() {
+        return this.getRate();
+    }
 }

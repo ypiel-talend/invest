@@ -1,9 +1,12 @@
 package org.ypiel.invest.loan;
 
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import org.ypiel.invest.Util;
 import org.ypiel.invest.insurance.Insurance;
+import org.ypiel.invest.insurance.InsuranceFactory;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -25,11 +28,15 @@ public class Loan {
     private final Insurance insurance;
 
     public Loan(String name, BigDecimal applicationFees, LocalDate start, BigDecimal monthlyAmount, BigDecimal rate, BigDecimal amount, Insurance insurance) {
+        this(name, applicationFees, start, monthlyAmount, rate, amount, insurance, false);
+    }
+
+    public Loan(String name, BigDecimal applicationFees, LocalDate start, BigDecimal monthlyAmount, BigDecimal rate, BigDecimal amount, Insurance insurance, boolean rawRate) {
         this.name = name;
         this.applicationFees = applicationFees;
         this.start = start;
         this.monthlyAmount = monthlyAmount;
-        this.rate = annualPercent(rate); //rate.divide(new BigDecimal(100), 10, RoundingMode.HALF_UP).divide(new BigDecimal(12), 10, RoundingMode.HALF_UP);
+        this.rate = rawRate ? rate : annualPercent(rate); //rate.divide(new BigDecimal(100), 10, RoundingMode.HALF_UP).divide(new BigDecimal(12), 10, RoundingMode.HALF_UP);
         this.amount = amount;
         this.insurance = insurance;
     }
@@ -58,6 +65,10 @@ public class Loan {
         init.asList().stream().forEach(e -> ((LoanLinkedEntry)e).computePrepayment());
 
         return init;
+    }
+
+    public void display(PrintStream ps){
+        ps.printf(Util.LOAN_FORMAT, this.getName(), this.getApplicationFees(), this.getStart(), this.getMonthlyAmount(), this.getRate(), this.getAmount(), this.getInsurance().getParam(), InsuranceFactory.getType(this.getInsurance()));
     }
 
 }

@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import org.ypiel.invest.BigFlatEntry;
 import org.ypiel.invest.Entry;
 import org.ypiel.invest.LinkedEntry;
+import org.ypiel.invest.insurance.Insurance;
 import org.ypiel.invest.insurance.InsuranceFactory;
 import org.ypiel.invest.loan.Loan;
 import org.ypiel.invest.loan.LoanLinkedEntry;
@@ -21,6 +22,7 @@ public class EntryORB {
 
     public void addBatch(PreparedStatement ps, Loan e) throws SQLException {
         log.info("Store loan...");
+        ps.clearParameters();
         ps.setString(1, e.getName());
         ps.setBigDecimal(2, e.getApplicationFees());
         ps.setDate(3, Date.valueOf(e.getStart()));
@@ -29,6 +31,8 @@ public class EntryORB {
         ps.setBigDecimal(6, e.getAmount());
         ps.setBigDecimal(7, e.getInsurance().getParam());
         ps.setString(8, InsuranceFactory.getType(e.getInsurance()));
+
+        ps.addBatch();
     }
 
 
@@ -77,5 +81,21 @@ public class EntryORB {
         bfe.setLinkedentry_remaining(res.getBigDecimal("linkedentry_prepayment"));
 
         return bfe;
+    }
+
+    public Loan createLoans(ResultSet res) throws SQLException {
+        String name = res.getString("name");
+        BigDecimal applicationFees = res.getBigDecimal("applicationFees");
+        LocalDate start = res.getDate("start").toLocalDate();
+        BigDecimal monthlyAmount = res.getBigDecimal("monthlyAmount");
+        BigDecimal rate = res.getBigDecimal("rate");
+        BigDecimal amount = res.getBigDecimal("amount");
+
+        BigDecimal insuranceVal = res.getBigDecimal("insurance");
+        String insuranceType = res.getString("insurance_type");
+
+        final Insurance insurance = InsuranceFactory.createInsurance(insuranceType, insuranceVal, true);
+
+        return new Loan(name, applicationFees, start, monthlyAmount, rate, amount, insurance, true);
     }
 }

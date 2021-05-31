@@ -10,8 +10,6 @@ import lombok.ToString;
 @Data
 public class BigFlatEntry {
 
-    public final static String FORMAT = "%5s %10s %10s %25s %20s %5s %20s %6s %6s %10s\n";
-
     private Integer id;
     private LocalDate date;
     private BigDecimal amount;
@@ -62,7 +60,7 @@ public class BigFlatEntry {
     }
 
     public void display(PrintStream ps){
-        ps.printf(FORMAT, this.getId(), this.getDate(), this.getAmount(), this.getSummary(), this.getLinkedentry_name(), this.getLinkedentry_id(), this.getLinkedentry_capital(), this.getLinkedentry_interest(), this.getLinkedentry_insurance(), this.getLinkedentry_remaining(), this.getLinkedentry_prepayment());
+        ps.printf(Util.ENTRY_FORMAT, this.getId(), this.getDate(), this.getAmount(), this.getSummary(), this.getLinkedentry_name(), this.getLinkedentry_id(), this.getLinkedentry_capital(), this.getLinkedentry_interest(), this.getLinkedentry_insurance(), this.getLinkedentry_remaining(), this.getLinkedentry_prepayment());
     }
 
 }

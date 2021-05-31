@@ -21,12 +21,12 @@ public class InsuranceFactory {
 
     private InsuranceFactory(){}
 
-    public static Insurance createInsurance(String type, BigDecimal value){
+    public static Insurance createInsurance(String type, BigDecimal value, boolean rawRate){
         if(type.equals(Type.FIXED.getId())){
             return new FixedInsurance(value);
         }
         else{
-            return new VariableInsurance(value);
+            return new VariableInsurance(value, rawRate);
         }
     }
 

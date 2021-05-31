@@ -16,7 +16,11 @@ public class VariableInsurance implements Insurance {
     private BigDecimal rate;
 
     public VariableInsurance(BigDecimal rate){
-        this.rate = annualPercent(rate); //rate.divide(new BigDecimal(100), 10, RoundingMode.HALF_UP).divide(new BigDecimal(12), 10, RoundingMode.HALF_UP);
+        this(rate, false);
+    }
+
+    public VariableInsurance(BigDecimal rate, boolean rawRate){
+        this.rate = rawRate ? rate : annualPercent(rate); //rate.divide(new BigDecimal(100), 10, RoundingMode.HALF_UP).divide(new BigDecimal(12), 10, RoundingMode.HALF_UP);
     }
 
     @Override

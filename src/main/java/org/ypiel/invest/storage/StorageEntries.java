@@ -15,7 +15,6 @@ import java.util.UUID;
 
 import org.ypiel.invest.BigFlatEntry;
 import org.ypiel.invest.Entry;
-import org.ypiel.invest.insurance.FixedInsurance;
 import org.ypiel.invest.insurance.VariableInsurance;
 import org.ypiel.invest.loan.Loan;
 import org.ypiel.invest.loan.LoanLinkedEntry;
@@ -26,6 +25,7 @@ import org.ypiel.invest.recurring.RecurringLinkedEntry;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.ypiel.invest.Util.displayBigFlatEntries;
+import static org.ypiel.invest.Util.displayLoans;
 import static org.ypiel.invest.Util.loadFileFromResources;
 
 @Slf4j
@@ -126,7 +126,10 @@ public class StorageEntries implements AutoCloseable {
 
             this.writeEntries(entities_names, entries);
 
-            final BigFlatEntry first = _select(entities_names);
+            final List<Loan> loans = _selectLoans(loans_name);
+            displayLoans(System.out, loans);
+
+            final BigFlatEntry first = _selectEntries(entities_names);
             displayBigFlatEntries(System.out, first);
 
             log.info(String.format("Drop '%s' table...", entities_names));
@@ -139,14 +142,33 @@ public class StorageEntries implements AutoCloseable {
 
     }
 
-    private BigFlatEntry _select(final String name) throws SQLException {
+    private List<Loan> _selectLoans(final String name) throws SQLException {
+        final Statement select = conn.createStatement();
+        log.info(String.format("Select loans from '%s'...", name));
+        final ResultSet res = select.executeQuery("select * from " + name + " order by start");
+
+        EntryORB orb = new EntryORB();
+        List<Loan> loans = new ArrayList<>();
+        while (res.next()) {
+            Loan l = orb.createLoans(res);
+            loans.add(l);
+        }
+
+        res.close();
+        select.close();
+
+        log.warn("!! Loans : " + loans.size());
+
+        return loans;
+    }
+
+    private BigFlatEntry _selectEntries(final String name) throws SQLException {
         final Statement select = conn.createStatement();
         log.info(String.format("Select entries from '%s'...", name));
         final ResultSet res = select.executeQuery("select * from " + name + " order by date");
 
         EntryORB orb = new EntryORB();
         BigFlatEntry current = null;
-        //res.beforeFirst();
         while (res.next()) {
             BigFlatEntry bfe = orb.createEntity(res);
             if (current != null) {

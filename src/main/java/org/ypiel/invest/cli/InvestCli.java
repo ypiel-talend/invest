@@ -15,18 +15,24 @@ public class InvestCli implements Runnable {
     @Option(names = {"--check-storage"}, description = "Check storage")
     boolean checkStorage = false;
 
+    @Option(names = {"--keep-data"}, description = "Don't drop tables after --check-storage")
+    boolean keepData = false;
+
+    @Option(names = {"--select-only"}, description = "Only display already inserted data from this name")
+    String selectOnly;
+
     @Override
     public void run() {
         if(checkStorage){
-            _checkStorage();
+            _checkStorage(keepData);
         }
         log.info("Done.");
     }
 
-    private void _checkStorage(){
+    private void _checkStorage(boolean keepData){
         log.info("Check storage...");
         try(StorageEntries o = new StorageEntries()) {
-            o.checkStorage();
+            o.checkStorage(keepData, selectOnly);
         } catch (Exception e) {
             e.printStackTrace();
         }

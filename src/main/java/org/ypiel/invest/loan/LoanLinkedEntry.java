@@ -92,4 +92,14 @@ public class LoanLinkedEntry extends LinkedEntry {
         return new LoanLinkedEntry(loan);
     }
 
+    @Override
+    public BigDecimal getIncomes(){
+        return this.capital;
+    }
+
+    @Override
+    public BigDecimal getOutcomes(){
+        return this.insurance.add(this.interest).add(this.prepayment);
+    }
+
 }

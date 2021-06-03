@@ -40,7 +40,9 @@ public class EntryORB {
         ps.clearParameters();
         ps.setDate(1, Date.valueOf(e.getDate()));
         ps.setBigDecimal(2, e.getAmount(true));
-        ps.setString(3, e.getSummary());
+        ps.setBigDecimal(3, e.getIncomes());
+        ps.setBigDecimal(4, e.getOutcomes());
+        ps.setString(5, e.getSummary());
 
         if (e instanceof LinkedEntry) {
             linkedEntryToPs(ps, (LinkedEntry) e);
@@ -54,16 +56,16 @@ public class EntryORB {
     }
 
     private void linkedEntryToPs(PreparedStatement ps, LinkedEntry e) throws SQLException {
-        ps.setString(4, e.getName());
-        ps.setInt(5, e.getId());
+        ps.setString(6, e.getName());
+        ps.setInt(7, e.getId());
     }
 
     private void loanLinkedEntryToPs(PreparedStatement ps, LoanLinkedEntry e) throws SQLException {
-        ps.setBigDecimal(6, e.getCapital());
-        ps.setBigDecimal(7, e.getInterest());
-        ps.setBigDecimal(8, e.getInsurance());
-        ps.setBigDecimal(9, e.getRemaining());
-        ps.setBigDecimal(10, e.getPrepayment());
+        ps.setBigDecimal(8, e.getCapital());
+        ps.setBigDecimal(9, e.getInterest());
+        ps.setBigDecimal(10, e.getInsurance());
+        ps.setBigDecimal(11, e.getRemaining());
+        ps.setBigDecimal(12, e.getPrepayment());
     }
 
     public BigFlatEntry createEntity(ResultSet res) throws SQLException {
@@ -71,6 +73,8 @@ public class EntryORB {
         bfe.setId(res.getInt("id"));
         bfe.setDate(res.getDate("date").toLocalDate());
         bfe.setAmount(res.getBigDecimal("amount"));
+        bfe.setIncomes(res.getBigDecimal("incomes"));
+        bfe.setOutcomes(res.getBigDecimal("outcomes"));
         bfe.setSummary(res.getString("summary"));
         bfe.setLinkedentry_name(res.getString("linkedentry_name"));
         bfe.setLinkedentry_id(res.getInt("linkedentry_id"));

@@ -13,6 +13,8 @@ public class BigFlatEntry {
     private Integer id;
     private LocalDate date;
     private BigDecimal amount;
+    private BigDecimal incomes;
+    private BigDecimal outcomes;
     private String summary;
     private String linkedentry_name;
     private Integer linkedentry_id;
@@ -60,7 +62,7 @@ public class BigFlatEntry {
     }
 
     public void display(PrintStream ps){
-        ps.printf(Util.ENTRY_FORMAT, this.getId(), this.getDate(), this.getAmount(), this.getSummary(), this.getLinkedentry_name(), this.getLinkedentry_id(), this.getLinkedentry_capital(), this.getLinkedentry_interest(), this.getLinkedentry_insurance(), this.getLinkedentry_remaining(), this.getLinkedentry_prepayment());
+        ps.printf(Util.ENTRY_FORMAT, this.getId(), this.getDate(), this.getAmount(), this.getIncomes(), this.getOutcomes(), this.getSummary(), this.getLinkedentry_name(), this.getLinkedentry_id(), this.getLinkedentry_capital(), this.getLinkedentry_interest(), this.getLinkedentry_insurance(), this.getLinkedentry_remaining(), this.getLinkedentry_prepayment());
     }
 
 }

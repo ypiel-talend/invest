@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Util {
 
-    public final static String ENTRY_FORMAT = "%5s %10s %10s %25s %20s %5s %20s %6s %6s %10s\n";
+    public final static String ENTRY_FORMAT = "%5s %10s %10s %10s %10s %25s %20s %5s %20s %6s %6s %10s\n";
     public final static String LOAN_FORMAT = "%5s %10s %10s %10s %5s %10s %5s %5s\n";
 
     public final static String formatBD(final BigDecimal bd) {
@@ -52,7 +52,7 @@ public class Util {
 
     public static void displayBigFlatEntries(PrintStream ps, final BigFlatEntry bfe) {
         ps.println("---------------------------------------------------------------------------------------------------------");
-        ps.printf(ENTRY_FORMAT, "ID", "DATE", "AMOUNT", "SUMMARY", "LINKEDENTRY_NAME", "LINKEDENTRY_ID", "LINKEDENTRY_CAPITAL", "LINKEDENTRY_INTEREST", "LINKEDENTRY_INSURANCE", "LINKEDENTRY_REMAINING", "LINKEDENTRY_PREPAYMENT");
+        ps.printf(ENTRY_FORMAT, "ID", "DATE", "AMOUNT", "INCOMES", "OUTCOMES", "SUMMARY", "LINKEDENTRY_NAME", "LINKEDENTRY_ID", "LINKEDENTRY_CAPITAL", "LINKEDENTRY_INTEREST", "LINKEDENTRY_INSURANCE", "LINKEDENTRY_REMAINING", "LINKEDENTRY_PREPAYMENT");
         ps.println("---------------------------------------------------------------------------------------------------------");
 
         if (bfe == null) {

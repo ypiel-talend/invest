@@ -35,7 +35,7 @@ public class StorageEntries implements AutoCloseable {
 
     private final static String driver = "org.apache.derby.jdbc.EmbeddedDriver";
     private final static String protocol = "jdbc:derby:";
-    private final static String url = protocol + "/tmp/derbyDB;create=true;"; //shutdown=true";
+    private final static String url = protocol + "/home/ypiel/db/derbyDB;create=true;user=SIMU;password=SIMU"; //shutdown=true";
 
     private Connection conn = null;
 
@@ -74,7 +74,7 @@ public class StorageEntries implements AutoCloseable {
         _write(tableName, "sql/insert_entries.sql", new ArrayList<>(entries));
     }
 
-    public void writeLoans(final String tableName, List<Loan> loans){
+    public void writeLoans(final String tableName, List<Loan> loans) {
         _checkConn();
         _write(tableName, "sql/insert_loans.sql", new ArrayList<>(loans));
     }
@@ -85,7 +85,7 @@ public class StorageEntries implements AutoCloseable {
         }
     }
 
-    public void checkStorage() {
+    public void checkStorage(boolean keepData, String selectOnly) {
         _checkConn();
 
 
@@ -94,37 +94,45 @@ public class StorageEntries implements AutoCloseable {
         if (name.length() > 7) {
             name = name.substring(0, 7);
         }
+
+        if (selectOnly != null) {
+            name = selectOnly;
+        }
+
         name = "invest_" + name;
 
-        String entities_names = name + "entities";
+        String entities_names = name + "_entities";
         String loans_name = name + "_loans";
 
         try {
-            _createTable(entities_names, loans_name);
+            if (selectOnly == null) {
 
-            List<Entry> entries = new ArrayList<>();
+                _createTable(entities_names, loans_name);
 
-            entries.add(new Entry(LocalDate.now(), new BigDecimal(100.1234d), "This is a 100.1234 test.", false));
-            entries.add(new Entry(LocalDate.now(), new BigDecimal(200.1234d), "This is a -200.1234 test.", true));
+                List<Entry> entries = new ArrayList<>();
 
-            Loan l = new Loan("Loan", new BigDecimal(500.0d), LocalDate.now(), new BigDecimal(700.0d), new BigDecimal(1.5d), new BigDecimal(50000.0d), new VariableInsurance(new BigDecimal(0.33d)));
-            final LoanLinkedEntry loanLinkedEntry = l.computePaymentPlan(new BigDecimal(50.0d));
-            entries.addAll(loanLinkedEntry.asList());
-            this.writeLoans(loans_name, Arrays.asList(l));
+                entries.add(new Entry(LocalDate.now(), new BigDecimal(100.1234d), "This is a 100.1234 test.", false));
+                entries.add(new Entry(LocalDate.now(), new BigDecimal(200.1234d), "This is a -200.1234 test.", true));
 
-            Recurring r = new Recurring("Recurring", LocalDate.now(), LocalDate.now().plusMonths(5), BigDecimal.ZERO, new BigDecimal(35.50d), true, Temporal.MONTHLY);
-            final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan();
-            entries.addAll(recurringLinkedEntry.asList());
+                Loan l = new Loan("Loan", new BigDecimal(500.0d), LocalDate.now(), new BigDecimal(700.0d), new BigDecimal(1.5d), new BigDecimal(50000.0d), new VariableInsurance(new BigDecimal(0.33d)));
+                final LoanLinkedEntry loanLinkedEntry = l.computePaymentPlan(new BigDecimal(50.0d));
+                entries.addAll(loanLinkedEntry.asList());
+                this.writeLoans(loans_name, Arrays.asList(l));
 
-            Recurring rtaxes = new Recurring("Taxes", LocalDate.now(), LocalDate.now().plusYears(4), new BigDecimal(2.0d), new BigDecimal(800.0d), true, Temporal.ANNUALLY);
-            final RecurringLinkedEntry taxes = rtaxes.computePaymentPlan();
-            entries.addAll(taxes.asList());
+                Recurring r = new Recurring("Recurring", LocalDate.now(), LocalDate.now().plusMonths(5), BigDecimal.ZERO, new BigDecimal(35.50d), true, Temporal.MONTHLY);
+                final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan();
+                entries.addAll(recurringLinkedEntry.asList());
 
-            Recurring rrent = new Recurring("Rent", LocalDate.now(), LocalDate.now().plusYears(10), new BigDecimal(1.7d), new BigDecimal(750.0d), false, Temporal.MONTHLY);
-            final RecurringLinkedEntry rent = rrent.computePaymentPlan();
-            entries.addAll(rent.asList());
+                Recurring rtaxes = new Recurring("Taxes", LocalDate.now(), LocalDate.now().plusYears(4), new BigDecimal(2.0d), new BigDecimal(800.0d), true, Temporal.ANNUALLY);
+                final RecurringLinkedEntry taxes = rtaxes.computePaymentPlan();
+                entries.addAll(taxes.asList());
 
-            this.writeEntries(entities_names, entries);
+                Recurring rrent = new Recurring("Rent", LocalDate.now(), LocalDate.now().plusYears(10), new BigDecimal(1.7d), new BigDecimal(750.0d), false, Temporal.MONTHLY);
+                final RecurringLinkedEntry rent = rrent.computePaymentPlan();
+                entries.addAll(rent.asList());
+
+                this.writeEntries(entities_names, entries);
+            }
 
             final List<Loan> loans = _selectLoans(loans_name);
             displayLoans(System.out, loans);
@@ -132,9 +140,15 @@ public class StorageEntries implements AutoCloseable {
             final BigFlatEntry first = _selectEntries(entities_names);
             displayBigFlatEntries(System.out, first);
 
-            log.info(String.format("Drop '%s' table...", entities_names));
-            final Statement drop = conn.createStatement();
-            drop.execute("drop table " + entities_names);
+            if (!keepData) {
+                log.info(String.format("Drop '%s' table...", entities_names));
+                final Statement dropEntries = conn.createStatement();
+                dropEntries.execute("drop table " + entities_names);
+
+                log.info(String.format("Drop '%s' table...", loans_name));
+                final Statement dropLoans = conn.createStatement();
+                dropLoans.execute("drop table " + loans_name);
+            }
 
         } catch (SQLException e) {
             log.error(String.format("Checking database has failed."), e);
@@ -156,8 +170,6 @@ public class StorageEntries implements AutoCloseable {
 
         res.close();
         select.close();
-
-        log.warn("!! Loans : " + loans.size());
 
         return loans;
     }
@@ -203,11 +215,10 @@ public class StorageEntries implements AutoCloseable {
     }
 
     private void prepareStatement(final Object o, EntryORB orb, final PreparedStatement ps) throws SQLException {
-        if(o instanceof Entry){
-            orb.addBatch(ps, (Entry)o);
-        }
-        else if(o instanceof Loan){
-            orb.addBatch(ps, (Loan)o);
+        if (o instanceof Entry) {
+            orb.addBatch(ps, (Entry) o);
+        } else if (o instanceof Loan) {
+            orb.addBatch(ps, (Loan) o);
         }
     }
 

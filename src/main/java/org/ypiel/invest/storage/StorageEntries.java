@@ -1,5 +1,7 @@
 package org.ypiel.invest.storage;
 
+import java.io.IOException;
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,10 +13,12 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.UUID;
 
 import org.ypiel.invest.BigFlatEntry;
 import org.ypiel.invest.Entry;
+import org.ypiel.invest.Util;
 import org.ypiel.invest.insurance.VariableInsurance;
 import org.ypiel.invest.loan.Loan;
 import org.ypiel.invest.loan.LoanLinkedEntry;
@@ -27,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import static org.ypiel.invest.Util.displayBigFlatEntries;
 import static org.ypiel.invest.Util.displayLoans;
 import static org.ypiel.invest.Util.loadFileFromResources;
+
 
 @Slf4j
 public class StorageEntries implements AutoCloseable {
@@ -82,6 +87,156 @@ public class StorageEntries implements AutoCloseable {
     private void _checkConn() {
         if (this.conn == null) {
             throw new RuntimeException("You are not connected.");
+        }
+    }
+
+    public void interactive(boolean drop, PrintStream out) {
+        _checkConn();
+        String name = null;
+        System.out.print("Nom de la simu : ");
+        Scanner scan = new Scanner(System.in);
+        name = scan.next();
+
+        String entities_names = name + "_entities";
+        String loans_name = name + "_loans";
+
+        try {
+
+            if (drop) {
+                log.info(String.format("Drop '%s' table...", entities_names));
+                final Statement dropEntries = conn.createStatement();
+                dropEntries.execute("drop table " + entities_names);
+
+                log.info(String.format("Drop '%s' table...", loans_name));
+                final Statement dropLoans = conn.createStatement();
+                dropLoans.execute("drop table " + loans_name);
+            }
+
+            _createTable(entities_names, loans_name);
+
+            List<Entry> entries = new ArrayList<>();
+
+            System.out.print("Prix du bien :");
+            BigDecimal prix = scan.nextBigDecimal();
+            System.out.print("Frais d'agence :");
+            BigDecimal agence = scan.nextBigDecimal();
+            BigDecimal notaire_rate = Util.percent(new BigDecimal("7.36"));
+            BigDecimal notaire = prix.multiply(notaire_rate);
+
+            System.out.println("Notaire : " + notaire);
+
+            prix = prix.add(agence);
+
+            System.out.println("Prêt immobilier");
+            System.out.print("Apport : ");
+            BigDecimal apport = scan.nextBigDecimal();
+            System.out.print("Frais bancaire : ");
+            BigDecimal fees = scan.nextBigDecimal();
+            System.out.print("Taux prêt : ");
+            BigDecimal rate = scan.nextBigDecimal();
+            System.out.print("Taux assurance : ");
+            BigDecimal rate_insurance = scan.nextBigDecimal();
+            System.out.print("Mensualité : ");
+            BigDecimal monthly_amount = scan.nextBigDecimal();
+            BigDecimal amount_loan = prix.add(notaire).add(fees).subtract(apport);
+
+            System.out.println("Montant du prêt : " + amount_loan);
+
+            System.out.println("Location");
+            System.out.print("Loyer : ");
+            BigDecimal loyer = scan.nextBigDecimal();
+            System.out.print("Charges : ");
+            BigDecimal charges = scan.nextBigDecimal();
+
+            System.out.println("Impôts supplémentaires");
+            System.out.print("Impôts : ");
+            BigDecimal impots = scan.nextBigDecimal();
+
+            entries.add(new Entry(LocalDate.now(), notaire, "Notaire", true));
+
+            Loan l = new Loan("Prêt Immo", fees, LocalDate.now(), monthly_amount, rate, amount_loan, new VariableInsurance(rate_insurance));
+            final LoanLinkedEntry loanLinkedEntry = l.computePaymentPlan(new BigDecimal(50.0d));
+            entries.addAll(loanLinkedEntry.asList());
+
+            Recurring rloyer = new Recurring("Loyer", LocalDate.now(), LocalDate.now().plusMonths(loanLinkedEntry.size()), BigDecimal.ZERO, loyer, false, Temporal.MONTHLY);
+            final RecurringLinkedEntry recurringLinkedEntryLoyer = rloyer.computePaymentPlan();
+            entries.addAll(recurringLinkedEntryLoyer.asList());
+
+            Recurring rcharges = new Recurring("Charge", LocalDate.now(), LocalDate.now().plusMonths(loanLinkedEntry.size()), BigDecimal.ZERO, charges, true, Temporal.MONTHLY);
+            final RecurringLinkedEntry recurringLinkedEntryCharge = rcharges.computePaymentPlan();
+            entries.addAll(recurringLinkedEntryCharge.asList());
+
+            Recurring rimpots = new Recurring("Impots", LocalDate.now(), LocalDate.now().plusMonths(loanLinkedEntry.size()), BigDecimal.ZERO, impots, true, Temporal.ANNUALLY);
+            final RecurringLinkedEntry recurringLinkedEntryImpots = rimpots.computePaymentPlan();
+            entries.addAll(recurringLinkedEntryImpots.asList());
+
+            this.writeLoans(loans_name, Arrays.asList(l));
+            this.writeEntries(entities_names, entries);
+
+            final BigFlatEntry first = _selectEntries(entities_names);
+            displayBigFlatEntries(out, first);
+
+            log.info(String.format("Durée du prêt : %d mois / %d années & %d mois.", loanLinkedEntry.size(), (loanLinkedEntry.size() / 12), (loanLinkedEntry.size() % 12)));
+            final BigDecimal cout_pret_brut = ((LoanLinkedEntry) loanLinkedEntry.getLast()).asList().stream().map(e -> e.getAmount()).reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+            log.info(String.format("Cout total du prêt brut : %f", cout_pret_brut));
+            final BigDecimal cout_pret = ((LoanLinkedEntry) loanLinkedEntry.getLast()).totalCost();
+            log.info(String.format("Cout total du prêt net après revente : %f", cout_pret));
+            final BigDecimal cout_impots = ((RecurringLinkedEntry)recurringLinkedEntryImpots.getLast()).total();
+            log.info(String.format("Cout total impots : %f", cout_impots));
+            final BigDecimal cout_charges = ((RecurringLinkedEntry)recurringLinkedEntryCharge.getLast()).total();
+            log.info(String.format("Cout total charges : %f", cout_charges));
+            final BigDecimal apport_loyer = ((RecurringLinkedEntry) recurringLinkedEntryLoyer.getLast()).total();
+            log.info(String.format("Apport loyer : %f", apport_loyer));
+
+
+        } catch (SQLException e) {
+            log.error(String.format("Checking database has failed."), e);
+        }
+    }
+
+
+    public void valomboisVannes(boolean drop, String selectOnly) {
+        _checkConn();
+        String name = "valomboisVannes";
+        String entities_names = name + "_entities";
+        String loans_name = name + "_loans";
+
+        try {
+            if (selectOnly == null) {
+
+                if (drop) {
+                    log.info(String.format("Drop '%s' table...", entities_names));
+                    final Statement dropEntries = conn.createStatement();
+                    dropEntries.execute("drop table " + entities_names);
+
+                    log.info(String.format("Drop '%s' table...", loans_name));
+                    final Statement dropLoans = conn.createStatement();
+                    dropLoans.execute("drop table " + loans_name);
+                }
+
+                _createTable(entities_names, loans_name);
+
+                List<Entry> entries = new ArrayList<>();
+
+                entries.add(new Entry(LocalDate.now(), new BigDecimal(13000.0d), "Notaire", true));
+
+                Loan l = new Loan("Prêt Immo", new BigDecimal(500.0d), LocalDate.now(), new BigDecimal(.0d), new BigDecimal(1.2d), new BigDecimal(199000.0d), new VariableInsurance(new BigDecimal(0.33d)));
+                final LoanLinkedEntry loanLinkedEntry = l.computePaymentPlan(new BigDecimal(50.0d));
+                entries.addAll(loanLinkedEntry.asList());
+
+                Recurring r = new Recurring("Loyer", LocalDate.now(), LocalDate.now().plusMonths(35 * 12), BigDecimal.ZERO, new BigDecimal(800d), false, Temporal.MONTHLY);
+                final RecurringLinkedEntry recurringLinkedEntry = r.computePaymentPlan();
+                entries.addAll(recurringLinkedEntry.asList());
+
+                this.writeLoans(loans_name, Arrays.asList(l));
+                this.writeEntries(entities_names, entries);
+            }
+
+            final BigFlatEntry first = _selectEntries(entities_names);
+            displayBigFlatEntries(System.out, first);
+
+        } catch (SQLException e) {
+            log.error(String.format("Checking database has failed."), e);
         }
     }
 

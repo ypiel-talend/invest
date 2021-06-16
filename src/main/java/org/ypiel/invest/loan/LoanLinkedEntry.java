@@ -17,7 +17,7 @@ public class LoanLinkedEntry extends LinkedEntry {
     private BigDecimal capital;
     private BigDecimal interest;
     private final BigDecimal insurance;
-    private final BigDecimal remaining;
+    private BigDecimal remaining;
     private BigDecimal prepayment;
 
 
@@ -66,6 +66,7 @@ public class LoanLinkedEntry extends LinkedEntry {
 
         this.interest = this.interest.add(next.getInterest());
         this.capital = this.capital.add(next.getCapital());
+        this.remaining = BigDecimal.ZERO;
 
         super.setAmount(this.getInterest().add(this.getInsurance()).add(this.getCapital()));
 
@@ -85,6 +86,18 @@ public class LoanLinkedEntry extends LinkedEntry {
         }
 
         return ((LoanLinkedEntry)this.getPrevious()).totalCost().add(this.getInterest()).add(this.getInsurance());
+    }
+
+    /**
+     * We add prepayment only to the current entry, the entry we sold the apartment.
+     * @return
+     */
+    public BigDecimal totalCostWithPrepayment(){
+        if(this.isFirst()){
+            return this.getInterest().add(this.getInsurance()).add(this.getLoan().getApplicationFees());
+        }
+
+        return ((LoanLinkedEntry)this.getPrevious()).totalCost().add(this.getInterest()).add(this.getInsurance()).add(this.getPrepayment());
     }
 
 

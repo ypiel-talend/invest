@@ -1,6 +1,7 @@
 package org.ypiel.invest.storage;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,16 +21,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EntryORB {
 
+    private final static int scale = 2;
+
     public void addBatch(PreparedStatement ps, Loan e) throws SQLException {
         log.info("Store loan...");
         ps.clearParameters();
         ps.setString(1, e.getName());
-        ps.setBigDecimal(2, e.getApplicationFees());
+        ps.setBigDecimal(2, e.getApplicationFees().setScale(scale, RoundingMode.HALF_UP));
         ps.setDate(3, Date.valueOf(e.getStart()));
-        ps.setBigDecimal(4, e.getMonthlyAmount());
-        ps.setBigDecimal(5, e.getRate());
-        ps.setBigDecimal(6, e.getAmount());
-        ps.setBigDecimal(7, e.getInsurance().getParam());
+        ps.setBigDecimal(4, e.getMonthlyAmount().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(5, e.getRate().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(6, e.getAmount().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(7, e.getInsurance().getParam().setScale(scale, RoundingMode.HALF_UP));
         ps.setString(8, InsuranceFactory.getType(e.getInsurance()));
 
         ps.addBatch();
@@ -39,9 +42,9 @@ public class EntryORB {
     public void addBatch(PreparedStatement ps, Entry e) throws SQLException {
         ps.clearParameters();
         ps.setDate(1, Date.valueOf(e.getDate()));
-        ps.setBigDecimal(2, e.getAmount(true));
-        ps.setBigDecimal(3, e.getIncomes());
-        ps.setBigDecimal(4, e.getOutcomes());
+        ps.setBigDecimal(2, e.getAmount(true).setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(3, e.getIncomes().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(4, e.getOutcomes().setScale(scale, RoundingMode.HALF_UP));
         ps.setString(5, e.getSummary());
 
         if (e instanceof LinkedEntry) {
@@ -61,11 +64,11 @@ public class EntryORB {
     }
 
     private void loanLinkedEntryToPs(PreparedStatement ps, LoanLinkedEntry e) throws SQLException {
-        ps.setBigDecimal(8, e.getCapital());
-        ps.setBigDecimal(9, e.getInterest());
-        ps.setBigDecimal(10, e.getInsurance());
-        ps.setBigDecimal(11, e.getRemaining());
-        ps.setBigDecimal(12, e.getPrepayment());
+        ps.setBigDecimal(8, e.getCapital().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(9, e.getInterest().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(10, e.getInsurance().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(11, e.getRemaining().setScale(scale, RoundingMode.HALF_UP));
+        ps.setBigDecimal(12, e.getPrepayment().setScale(scale, RoundingMode.HALF_UP));
     }
 
     public BigFlatEntry createEntity(ResultSet res) throws SQLException {

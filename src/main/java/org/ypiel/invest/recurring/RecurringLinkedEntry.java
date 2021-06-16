@@ -32,4 +32,12 @@ public class RecurringLinkedEntry extends LinkedEntry {
         return new RecurringLinkedEntry(recurring, recurring.isDebit());
     }
 
+    public BigDecimal total(){
+        if(this.isFirst()){
+            return this.getAmount();
+        }
+
+        return ((RecurringLinkedEntry)this.getPrevious()).total().add(this.getAmount());
+    }
+
 }

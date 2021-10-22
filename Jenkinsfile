@@ -1,16 +1,10 @@
 pipeline {
-
-	stages{
-
-		stage('Echo the Dolphin'){
-
-			node {
-				sleep 10
-				echo 'Yolooooo XXXXXXXXX'
-			}
-
-		}
-
-	}
-
+    agent { docker { image 'maven:3.3.3' } }
+    stages {
+        stage('build') {
+            steps {
+                sh 'mvn --version'
+            }
+        }
+    }
 }
